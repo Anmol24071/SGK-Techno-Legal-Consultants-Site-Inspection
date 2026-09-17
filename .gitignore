@@ -1,0 +1,12 @@
+node_modules
+.next
+out
+.env
+*.db
+.DS_Store
+.firebase
+node_modules
+node_modules
+node_modules
+node_modules
+node_modules

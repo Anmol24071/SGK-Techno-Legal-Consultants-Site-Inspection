@@ -1,0 +1,181 @@
+datasource db {
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
+}
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+model User {
+  id            String   @id @default(uuid())
+  googleId      String?  @unique
+  name          String
+  email         String   @unique
+  image         String?
+  role          String   @default("EMPLOYEE") // ADMIN | EMPLOYEE
+  status        String   @default("PENDING")  // PENDING | APPROVED | DENIED | REVOKED
+  lastLoginAt   DateTime @default(now())
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+
+  assignedInspections Inspection[]  @relation("AssignedInspector")
+  createdInspections  Inspection[]  @relation("CreatedByAdmin")
+  accessRequests      AccessRequest[]
+  auditLogs           AuditLog[]
+}
+
+model AccessRequest {
+  id          String    @id @default(uuid())
+  userId      String
+  user        User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  name        String
+  email       String
+  image       String?
+  googleId    String?
+  status      String    @default("PENDING") // PENDING | APPROVED | DENIED | REVOKED
+  requestDate DateTime  @default(now())
+  reviewedAt  DateTime?
+  reviewedBy  String?
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+}
+
+model Inspection {
+  id              String   @id @default(uuid())
+  title           String
+  address         String?
+  siteCoordinator String?
+  engineerName    String?
+  buildingName    String?
+  totalFloors     Int?
+  flatFloor       Int?
+  status          String   @default("ASSIGNED") // ASSIGNED | IN_PROGRESS | SUBMITTED | REVIEWED
+
+  assignedToId    String
+  assignedTo      User     @relation("AssignedInspector", fields: [assignedToId], references: [id])
+  createdById     String
+  createdBy       User     @relation("CreatedByAdmin", fields: [createdById], references: [id])
+
+  assignedDate    DateTime @default(now())
+  submissionDate  DateTime?
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+
+  rooms            Room[]
+  compassDirections CompassDirection[]
+  gpsLocation      GpsLocation?
+  carpetDetail     CarpetDetail?
+  landmarks        Landmark[]
+  nearbyFacilities NearbyFacility[]
+  sketches         Sketch[]
+  sitePhotos       SitePhoto[]
+}
+
+model Room {
+  id             String     @id @default(uuid())
+  inspectionId   String
+  inspection     Inspection @relation(fields: [inspectionId], references: [id], onDelete: Cascade)
+  type           String     // LIVING | BEDROOM | PASSAGE | KITCHEN | BALCONY | WASHROOM
+  roomNumber     Int?       // e.g. 1 for Bedroom 1, 2 for Bedroom 2
+  length         Float?
+  width          Float?
+  area           Float?
+  manualOverride Boolean    @default(false)
+  unit           String     @default("sq. ft.")
+  createdAt      DateTime   @default(now())
+  updatedAt      DateTime   @updatedAt
+}
+
+model CompassDirection {
+  id           String     @id @default(uuid())
+  inspectionId String
+  inspection   Inspection @relation(fields: [inspectionId], references: [id], onDelete: Cascade)
+  target       String     // FLAT or BUILDING
+  north        String?
+  south        String?
+  east         String?
+  west         String?
+  createdAt    DateTime   @default(now())
+  updatedAt    DateTime   @updatedAt
+}
+
+model GpsLocation {
+  id           String     @id @default(uuid())
+  inspectionId String     @unique
+  inspection   Inspection @relation(fields: [inspectionId], references: [id], onDelete: Cascade)
+  latitude     Float
+  longitude    Float
+  capturedAt   DateTime   @default(now())
+}
+
+model CarpetDetail {
+  id           String     @id @default(uuid())
+  inspectionId String     @unique
+  inspection   Inspection @relation(fields: [inspectionId], references: [id], onDelete: Cascade)
+  carpetArea   Float?
+  unit         String     @default("sq. ft.")
+  createdAt    DateTime   @default(now())
+  updatedAt    DateTime   @updatedAt
+}
+
+model Landmark {
+  id           String     @id @default(uuid())
+  inspectionId String
+  inspection   Inspection @relation(fields: [inspectionId], references: [id], onDelete: Cascade)
+  name         String
+  description  String?
+  distance     String?
+  createdAt    DateTime   @default(now())
+}
+
+model NearbyFacility {
+  id              String     @id @default(uuid())
+  inspectionId    String
+  inspection      Inspection @relation(fields: [inspectionId], references: [id], onDelete: Cascade)
+  facilityKey     String     // railway_station, bus_stop, market, shopping_mall, cinema_hall, school, college, hospital, govt_office, police_station, auto_stand
+  facilityLabel   String
+  placeName       String?
+  placeId         String?
+  address         String?
+  latitude        Float?
+  longitude       Float?
+  distance        Float?
+  distanceText    String?
+  unit            String     @default("km")
+  selectionMethod String     @default("AUTOMATIC") // AUTOMATIC | MANUAL
+  retrievedAt     DateTime?
+  createdAt       DateTime   @default(now())
+  updatedAt       DateTime   @updatedAt
+}
+
+model Sketch {
+  id           String     @id @default(uuid())
+  inspectionId String
+  inspection   Inspection @relation(fields: [inspectionId], references: [id], onDelete: Cascade)
+  type         String     // FLAT | BUILDING
+  fileUrl      String
+  uploadedAt   DateTime   @default(now())
+}
+
+model SitePhoto {
+  id           String     @id @default(uuid())
+  inspectionId String
+  inspection   Inspection @relation(fields: [inspectionId], references: [id], onDelete: Cascade)
+  fileUrl      String
+  caption      String?
+  latitude     Float?
+  longitude    Float?
+  uploadedAt   DateTime   @default(now())
+}
+
+model AuditLog {
+  id        String   @id @default(uuid())
+  userId    String?
+  user      User?    @relation(fields: [userId], references: [id], onDelete: SetNull)
+  userName  String
+  userEmail String
+  action    String
+  details   String?
+  timestamp DateTime @default(now())
+}
