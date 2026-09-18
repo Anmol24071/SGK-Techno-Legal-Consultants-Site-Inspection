@@ -44,6 +44,16 @@ function InnerSessionProvider({ children }: { children: React.ReactNode }) {
     }
   }, []);
 
+  useEffect(() => {
+    if (nextAuthStatus === "authenticated" && nextAuthSession?.user) {
+      try {
+        const u = nextAuthSession.user as CustomUser;
+        localStorage.setItem("sgk_user_session", JSON.stringify(u));
+        setLocalUser(u);
+      } catch (e) {}
+    }
+  }, [nextAuthStatus, nextAuthSession]);
+
   const loginAs = (user: CustomUser) => {
     localStorage.setItem("sgk_user_session", JSON.stringify(user));
     setLocalUser(user);

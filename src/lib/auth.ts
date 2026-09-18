@@ -27,6 +27,11 @@ export const authOptions: NextAuthOptions = {
     }),
   ],
   callbacks: {
+    async redirect({ url, baseUrl }) {
+      if (url.startsWith("/")) return `${baseUrl}${url}`;
+      else if (new URL(url).origin === baseUrl) return url;
+      return baseUrl;
+    },
     async signIn({ user, account, profile }) {
       if (account?.provider === "google") {
         if (!user.email) return false;
@@ -152,6 +157,17 @@ export const authOptions: NextAuthOptions = {
         (session.user as any).status = token.status || "PENDING";
       }
       return session;
+    },
+  },
+  cookies: {
+    sessionToken: {
+      name: process.env.NODE_ENV === "production" ? `__Secure-next-auth.session-token` : `next-auth.session-token`,
+      options: {
+        httpOnly: true,
+        sameSite: "lax",
+        path: "/",
+        secure: process.env.NODE_ENV === "production",
+      },
     },
   },
   pages: {
