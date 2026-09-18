@@ -21,70 +21,82 @@ export const authOptions: NextAuthOptions = {
         const adminEmail = (process.env.ADMIN_EMAIL || "tarachandanianil@gmail.com").trim().toLowerCase();
         const isAdmin = user.email.trim().toLowerCase() === adminEmail;
 
-        let dbUser = await prisma.user.findUnique({
-          where: { email: user.email.toLowerCase() },
-        });
-
-        if (!dbUser) {
-          // First time sign-in: create user record
-          dbUser = await prisma.user.create({
-            data: {
-              googleId: account.providerAccountId,
-              name: user.name || "Site Inspector",
-              email: user.email.toLowerCase(),
-              image: user.image || null,
-              role: isAdmin ? "ADMIN" : "EMPLOYEE",
-              status: isAdmin ? "APPROVED" : "PENDING",
-            },
+        try {
+          let dbUser = await prisma.user.findUnique({
+            where: { email: user.email.toLowerCase() },
           });
 
-          if (!isAdmin) {
-            // Create Access Request record
-            await prisma.accessRequest.create({
+          if (!dbUser) {
+            // First time sign-in: create user record
+            dbUser = await prisma.user.create({
               data: {
-                userId: dbUser.id,
-                name: dbUser.name,
-                email: dbUser.email,
-                image: dbUser.image,
                 googleId: account.providerAccountId,
-                status: "PENDING",
+                name: user.name || "Site Inspector",
+                email: user.email.toLowerCase(),
+                image: user.image || null,
+                role: isAdmin ? "ADMIN" : "EMPLOYEE",
+                status: isAdmin ? "APPROVED" : "PENDING",
               },
             });
 
-            try {
-              // Dispatch confirmation email to Visitor's verified Google account email (Requirement 4A)
-              await sendAccessEmail({
-                to: dbUser.email,
-                name: dbUser.name,
-                type: "PROFILE_SHARED",
-              });
+            if (!isAdmin) {
+              // Create Access Request record
+              try {
+                await prisma.accessRequest.create({
+                  data: {
+                    userId: dbUser.id,
+                    name: dbUser.name,
+                    email: dbUser.email,
+                    image: dbUser.image,
+                    googleId: account.providerAccountId,
+                    status: "PENDING",
+                  },
+                });
+              } catch (arErr) {
+                console.error("AccessRequest creation error:", arErr);
+              }
 
-              // Dispatch instant email notification to Chief Admin
-              await sendAccessEmail({
-                to: adminEmail,
-                name: dbUser.name,
-                type: "NEW_REQUEST",
+              try {
+                // Dispatch confirmation email to Visitor's verified Google account email (Requirement 4A)
+                await sendAccessEmail({
+                  to: dbUser.email,
+                  name: dbUser.name,
+                  type: "PROFILE_SHARED",
+                });
+
+                // Dispatch instant email notification to Chief Admin
+                await sendAccessEmail({
+                  to: adminEmail,
+                  name: dbUser.name,
+                  type: "NEW_REQUEST",
+                });
+              } catch (emailErr) {
+                console.error("Non-blocking email dispatch error during Google signIn:", emailErr);
+              }
+            }
+          } else {
+            // Existing user sign-in update
+            const updatedRole = isAdmin ? "ADMIN" : dbUser.role;
+            const updatedStatus = isAdmin ? "APPROVED" : dbUser.status;
+
+            try {
+              await prisma.user.update({
+                where: { id: dbUser.id },
+                data: {
+                  googleId: account.providerAccountId,
+                  name: user.name || dbUser.name,
+                  image: user.image || dbUser.image,
+                  role: updatedRole,
+                  status: updatedStatus,
+                  lastLoginAt: new Date(),
+                },
               });
-            } catch (emailErr) {
-              console.error("Non-blocking email dispatch error during Google signIn:", emailErr);
+            } catch (updErr) {
+              console.error("User update error:", updErr);
             }
           }
-        } else {
-          // Existing user sign-in update
-          const updatedRole = isAdmin ? "ADMIN" : dbUser.role;
-          const updatedStatus = isAdmin ? "APPROVED" : dbUser.status;
-
-          await prisma.user.update({
-            where: { id: dbUser.id },
-            data: {
-              googleId: account.providerAccountId,
-              name: user.name || dbUser.name,
-              image: user.image || dbUser.image,
-              role: updatedRole,
-              status: updatedStatus,
-              lastLoginAt: new Date(),
-            },
-          });
+        } catch (dbErr) {
+          console.error("Prisma Database Error in signIn callback (non-fatal):", dbErr);
         }
       }
       return true;
@@ -97,25 +109,34 @@ export const authOptions: NextAuthOptions = {
         const adminEmail = (process.env.ADMIN_EMAIL || "tarachandanianil@gmail.com").trim().toLowerCase();
         const isAdmin = token.email.trim().toLowerCase() === adminEmail;
 
-        const dbUser = await prisma.user.findUnique({
-          where: { email: token.email.toLowerCase() },
-        });
+        try {
+          const dbUser = await prisma.user.findUnique({
+            where: { email: token.email.toLowerCase() },
+          });
 
-        if (dbUser) {
-          token.id = dbUser.id;
-          token.role = isAdmin ? "ADMIN" : dbUser.role;
-          token.status = isAdmin ? "APPROVED" : dbUser.status;
-          token.name = dbUser.name;
-          token.picture = dbUser.image || undefined;
+          if (dbUser) {
+            token.id = dbUser.id;
+            token.role = isAdmin ? "ADMIN" : dbUser.role;
+            token.status = isAdmin ? "APPROVED" : dbUser.status;
+            token.name = dbUser.name;
+            token.picture = dbUser.image || undefined;
+          } else {
+            token.role = isAdmin ? "ADMIN" : "EMPLOYEE";
+            token.status = isAdmin ? "APPROVED" : "PENDING";
+          }
+        } catch (dbErr) {
+          console.error("Prisma Database Error in jwt callback (fallback enabled):", dbErr);
+          token.role = isAdmin ? "ADMIN" : "EMPLOYEE";
+          token.status = isAdmin ? "APPROVED" : "PENDING";
         }
       }
       return token;
     },
     async session({ session, token }) {
       if (session.user) {
-        (session.user as any).id = token.id;
-        (session.user as any).role = token.role;
-        (session.user as any).status = token.status;
+        (session.user as any).id = token.id || "temp-id";
+        (session.user as any).role = token.role || "EMPLOYEE";
+        (session.user as any).status = token.status || "PENDING";
       }
       return session;
     },
