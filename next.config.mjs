@@ -2,11 +2,6 @@
 const nextConfig = {
   reactStrictMode: true,
   output: 'standalone',
-  experimental: {
-    outputFileTracingIncludes: {
-      '/**': ['./prisma/**/*', './dev.db'],
-    },
-  },
   images: {
     unoptimized: true,
     remotePatterns: [
