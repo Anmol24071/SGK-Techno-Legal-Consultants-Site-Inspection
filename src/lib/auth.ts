@@ -22,12 +22,25 @@ export const authOptions: NextAuthOptions = {
     GoogleProvider({
       clientId: GOOGLE_CLIENT_ID,
       clientSecret: GOOGLE_CLIENT_SECRET,
+      checks: ["state"],
       httpOptions: {
         timeout: 15000,
       },
     }),
   ],
+  useSecureCookies: process.env.NODE_ENV === "production" || process.env.VERCEL ? true : false,
   debug: true,
+  logger: {
+    error(code, metadata) {
+      console.error(`[NEXTAUTH ERROR LOG] ${code}`, metadata);
+    },
+    warn(code) {
+      console.warn(`[NEXTAUTH WARN LOG] ${code}`);
+    },
+    debug(code, metadata) {
+      console.log(`[NEXTAUTH DEBUG LOG] ${code}`, metadata);
+    },
+  },
   callbacks: {
     async redirect({ url, baseUrl }) {
       console.log(`[AUTH DIAGNOSTIC] redirect callback - url: ${url}, baseUrl: ${baseUrl}`);
