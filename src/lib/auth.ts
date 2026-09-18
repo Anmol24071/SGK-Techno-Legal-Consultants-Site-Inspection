@@ -3,33 +3,23 @@ import GoogleProvider from "next-auth/providers/google";
 import { prisma } from "./prisma";
 import { sendAccessEmail } from "./email";
 
-const GOOGLE_CLIENT_ID = process.env.GOOGLE_CLIENT_ID || "705165472131-bhls3dmdfs7n4jqgmsgp4pmjvvc1s5s7.apps.googleusercontent.com";
-const GOOGLE_CLIENT_SECRET = process.env.GOOGLE_CLIENT_SECRET || "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";
-const NEXTAUTH_SECRET = process.env.NEXTAUTH_SECRET || "sgk_techno_legal_super_secret_session_key_2026";
-const ADMIN_EMAIL = (process.env.ADMIN_EMAIL || "tarachandanianil@gmail.com").trim().toLowerCase();
-const CANONICAL_URL = "https://sgk-techno-legal-consultants-si.vercel.app";
-
-if (!process.env.NEXTAUTH_URL || process.env.NEXTAUTH_URL.includes("localhost")) {
-  if (process.env.VERCEL || process.env.NODE_ENV === "production") {
-    process.env.NEXTAUTH_URL = CANONICAL_URL;
-  } else {
-    process.env.NEXTAUTH_URL = "http://localhost:3000";
-  }
-}
+const GOOGLE_CLIENT_ID = process.env.GOOGLE_CLIENT_ID || "";
+const GOOGLE_CLIENT_SECRET = process.env.GOOGLE_CLIENT_SECRET || "";
+const NEXTAUTH_SECRET = process.env.NEXTAUTH_SECRET || "";
+const ADMIN_EMAIL = (process.env.ADMIN_EMAIL || "").trim().toLowerCase();
 
 export const authOptions: NextAuthOptions = {
   providers: [
     GoogleProvider({
       clientId: GOOGLE_CLIENT_ID,
       clientSecret: GOOGLE_CLIENT_SECRET,
-      checks: ["none"],
       httpOptions: {
         timeout: 15000,
       },
     }),
   ],
   useSecureCookies: process.env.NODE_ENV === "production" || process.env.VERCEL ? true : false,
-  debug: true,
+  debug: false,
   logger: {
     error(code, metadata) {
       console.error(`[NEXTAUTH ERROR LOG] ${code}`, metadata);

@@ -2,7 +2,11 @@ const { PrismaClient } = require('@prisma/client');
 const prisma = new PrismaClient();
 
 async function main() {
-  const adminEmail = process.env.ADMIN_EMAIL || 'tarachandanianmol41@gmail.com';
+  const adminEmail = (process.env.ADMIN_EMAIL || '').trim().toLowerCase();
+  if (!adminEmail) {
+    console.error('Error: ADMIN_EMAIL environment variable is required to run seed.');
+    process.exit(1);
+  }
 
   console.log('Seeding database for SGK Techno-Legal Consultants...');
 
