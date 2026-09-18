@@ -18,12 +18,6 @@ import {
   ImageRun,
 } from "docx";
 
-export const dynamic = 'force-static';
-export const dynamicParams = false;
-
-export function generateStaticParams() {
-  return [];
-}
 
 async function getImageBuffer(fileUrl?: string | null): Promise<Buffer | null> {
   if (!fileUrl) return null;

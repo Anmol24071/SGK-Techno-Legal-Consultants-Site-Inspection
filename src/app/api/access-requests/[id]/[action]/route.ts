@@ -4,12 +4,6 @@ import { prisma } from "@/lib/prisma";
 import { sendAccessEmail } from "@/lib/email";
 import { logAuditEvent } from "@/lib/audit";
 
-export const dynamic = 'force-static';
-export const dynamicParams = false;
-
-export function generateStaticParams() {
-  return [];
-}
 
 export async function POST(
   req: Request,
