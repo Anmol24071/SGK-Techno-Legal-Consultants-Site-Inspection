@@ -8,6 +8,14 @@ const GOOGLE_CLIENT_SECRET = process.env.GOOGLE_CLIENT_SECRET || "GOCSPX-Qu3Vl_B
 const NEXTAUTH_SECRET = process.env.NEXTAUTH_SECRET || "sgk_techno_legal_super_secret_session_key_2026";
 const ADMIN_EMAIL = process.env.ADMIN_EMAIL || "tarachandanianil@gmail.com";
 
+if (!process.env.NEXTAUTH_URL || process.env.NEXTAUTH_URL.includes("localhost")) {
+  if (process.env.VERCEL_URL) {
+    process.env.NEXTAUTH_URL = `https://${process.env.VERCEL_URL}`;
+  } else if (process.env.NODE_ENV === "production") {
+    process.env.NEXTAUTH_URL = "https://sgk-techno-legal-consultants-si.vercel.app";
+  }
+}
+
 export const authOptions: NextAuthOptions = {
   providers: [
     GoogleProvider({
