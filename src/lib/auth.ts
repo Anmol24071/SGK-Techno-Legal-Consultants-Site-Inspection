@@ -74,23 +74,18 @@ export const authOptions: NextAuthOptions = {
                 console.error("AccessRequest creation error:", arErr);
               }
 
-              try {
-                // Dispatch confirmation email to Visitor's verified Google account email (Requirement 4A)
-                await sendAccessEmail({
-                  to: dbUser.email,
-                  name: dbUser.name,
-                  type: "PROFILE_SHARED",
-                });
+              // Non-blocking background email notifications
+              sendAccessEmail({
+                to: dbUser.email,
+                name: dbUser.name,
+                type: "PROFILE_SHARED",
+              }).catch((emailErr) => console.error("Email dispatch error:", emailErr));
 
-                // Dispatch instant email notification to Chief Admin
-                await sendAccessEmail({
-                  to: adminEmail,
-                  name: dbUser.name,
-                  type: "NEW_REQUEST",
-                });
-              } catch (emailErr) {
-                console.error("Non-blocking email dispatch error during Google signIn:", emailErr);
-              }
+              sendAccessEmail({
+                to: adminEmail,
+                name: dbUser.name,
+                type: "NEW_REQUEST",
+              }).catch((emailErr) => console.error("Email dispatch error:", emailErr));
             }
           } else {
             // Existing user sign-in update
@@ -159,19 +154,8 @@ export const authOptions: NextAuthOptions = {
       return session;
     },
   },
-  cookies: {
-    sessionToken: {
-      name: process.env.NODE_ENV === "production" ? `__Secure-next-auth.session-token` : `next-auth.session-token`,
-      options: {
-        httpOnly: true,
-        sameSite: "lax",
-        path: "/",
-        secure: process.env.NODE_ENV === "production",
-      },
-    },
-  },
+
   pages: {
-    signIn: "/",
     error: "/",
   },
   session: {
