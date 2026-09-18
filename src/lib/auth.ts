@@ -3,11 +3,16 @@ import GoogleProvider from "next-auth/providers/google";
 import { prisma } from "./prisma";
 import { sendAccessEmail } from "./email";
 
+const GOOGLE_CLIENT_ID = process.env.GOOGLE_CLIENT_ID || "705165472131-bhls3dmdfs7n4jqgmsgp4pmjvvc1s5s7.apps.googleusercontent.com";
+const GOOGLE_CLIENT_SECRET = process.env.GOOGLE_CLIENT_SECRET || "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";
+const NEXTAUTH_SECRET = process.env.NEXTAUTH_SECRET || "sgk_techno_legal_super_secret_session_key_2026";
+const ADMIN_EMAIL = process.env.ADMIN_EMAIL || "tarachandanianil@gmail.com";
+
 export const authOptions: NextAuthOptions = {
   providers: [
     GoogleProvider({
-      clientId: process.env.GOOGLE_CLIENT_ID || "",
-      clientSecret: process.env.GOOGLE_CLIENT_SECRET || "",
+      clientId: GOOGLE_CLIENT_ID,
+      clientSecret: GOOGLE_CLIENT_SECRET,
       httpOptions: {
         timeout: 15000,
       },
@@ -18,7 +23,7 @@ export const authOptions: NextAuthOptions = {
       if (account?.provider === "google") {
         if (!user.email) return false;
 
-        const adminEmail = (process.env.ADMIN_EMAIL || "tarachandanianil@gmail.com").trim().toLowerCase();
+        const adminEmail = ADMIN_EMAIL.trim().toLowerCase();
         const isAdmin = user.email.trim().toLowerCase() === adminEmail;
 
         try {
@@ -106,7 +111,7 @@ export const authOptions: NextAuthOptions = {
         token.id = user.id;
       }
       if (token.email) {
-        const adminEmail = (process.env.ADMIN_EMAIL || "tarachandanianil@gmail.com").trim().toLowerCase();
+        const adminEmail = ADMIN_EMAIL.trim().toLowerCase();
         const isAdmin = token.email.trim().toLowerCase() === adminEmail;
 
         try {
@@ -148,7 +153,7 @@ export const authOptions: NextAuthOptions = {
   session: {
     strategy: "jwt",
   },
-  secret: process.env.NEXTAUTH_SECRET || "sgk_techno_legal_super_secret_session_key_2026",
+  secret: NEXTAUTH_SECRET,
 };
 
 export async function getCurrentUser() {

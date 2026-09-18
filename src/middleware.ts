@@ -38,6 +38,7 @@ export default withAuth(
     return NextResponse.next();
   },
   {
+    secret: process.env.NEXTAUTH_SECRET || "sgk_techno_legal_super_secret_session_key_2026",
     callbacks: {
       authorized: ({ token, req }) => {
         const pathname = req.nextUrl.pathname;
