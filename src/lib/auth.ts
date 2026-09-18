@@ -11,7 +11,7 @@ const ADMIN_EMAIL = process.env.ADMIN_EMAIL || "tarachandanianil@gmail.com";
 if (!process.env.NEXTAUTH_URL || process.env.NEXTAUTH_URL.includes("localhost")) {
   if (process.env.VERCEL_URL) {
     process.env.NEXTAUTH_URL = `https://${process.env.VERCEL_URL}`;
-  } else if (process.env.NODE_ENV === "production") {
+  } else {
     process.env.NEXTAUTH_URL = "https://sgk-techno-legal-consultants-si.vercel.app";
   }
 }

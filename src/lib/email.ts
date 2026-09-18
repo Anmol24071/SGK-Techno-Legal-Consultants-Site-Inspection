@@ -40,7 +40,7 @@ A new user has submitted an access request for SGK Techno-Legal Consultants:
 Name: ${name}
 Email: ${to}
 
-Please log in to your Admin Dashboard at ${process.env.NEXTAUTH_URL || 'http://localhost:3000'} to approve or deny this request.
+Please log in to your Admin Dashboard at ${process.env.NEXTAUTH_URL || 'https://sgk-techno-legal-consultants-si.vercel.app'} to approve or deny this request.
 
 Regards,
 SGK Techno-Legal Consultants`
@@ -86,7 +86,7 @@ SGK Techno-Legal Consultants`;
                  <strong>Email:</strong> ${to}
                </div>
                <div style="text-align: center; margin: 24px 0;">
-                 <a href="${process.env.NEXTAUTH_URL || 'http://localhost:3000'}/admin/requests" style="background-color: #0f172a; color: #ffffff; padding: 12px 24px; text-decoration: none; border-radius: 6px; font-weight: bold; display: inline-block;">Manage Access Requests</a>
+                 <a href="${process.env.NEXTAUTH_URL || 'https://sgk-techno-legal-consultants-si.vercel.app'}/admin/requests" style="background-color: #0f172a; color: #ffffff; padding: 12px 24px; text-decoration: none; border-radius: 6px; font-weight: bold; display: inline-block;">Manage Access Requests</a>
                </div>`
             : `<p style="font-size: 16px; font-weight: bold; margin-top: 0;">Hello ${name},</p>
                ${
@@ -97,7 +97,7 @@ SGK Techno-Legal Consultants`;
                         ${to}
                       </div>
                       <div style="text-align: center; margin: 24px 0;">
-                        <a href="${process.env.NEXTAUTH_URL || 'http://localhost:3000'}" style="background-color: #0f172a; color: #ffffff; padding: 12px 24px; text-decoration: none; border-radius: 6px; font-weight: bold; display: inline-block;">Open Inspection Portal</a>
+                        <a href="${process.env.NEXTAUTH_URL || 'https://sgk-techno-legal-consultants-si.vercel.app'}" style="background-color: #0f172a; color: #ffffff; padding: 12px 24px; text-decoration: none; border-radius: 6px; font-weight: bold; display: inline-block;">Open Inspection Portal</a>
                       </div>`
                    : `<p>Your access request for <strong>SGK Techno-Legal Consultants</strong> has been denied.</p>
                       <p>If you believe this was done in error, please contact the administrator.</p>`
