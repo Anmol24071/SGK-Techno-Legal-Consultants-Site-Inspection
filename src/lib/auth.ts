@@ -26,13 +26,16 @@ export const authOptions: NextAuthOptions = {
       },
     }),
   ],
+  debug: true,
   callbacks: {
     async redirect({ url, baseUrl }) {
+      console.log(`[AUTH DIAGNOSTIC] redirect callback - url: ${url}, baseUrl: ${baseUrl}`);
       if (url.startsWith("/")) return `${baseUrl}${url}`;
       else if (new URL(url).origin === baseUrl) return url;
       return baseUrl;
     },
     async signIn({ user, account, profile }) {
+      console.log(`[AUTH DIAGNOSTIC] signIn callback - email: ${user?.email}, provider: ${account?.provider}`);
       if (account?.provider === "google") {
         if (!user.email) return false;
 
@@ -115,6 +118,7 @@ export const authOptions: NextAuthOptions = {
       return true;
     },
     async jwt({ token, user, trigger, session }) {
+      console.log(`[AUTH DIAGNOSTIC] jwt callback - token email: ${token?.email}`);
       if (user) {
         token.id = user.id;
       }
@@ -146,6 +150,7 @@ export const authOptions: NextAuthOptions = {
       return token;
     },
     async session({ session, token }) {
+      console.log(`[AUTH DIAGNOSTIC] session callback - user email: ${session?.user?.email}, role: ${token?.role}, status: ${token?.status}`);
       if (session.user) {
         (session.user as any).id = token.id || "temp-id";
         (session.user as any).role = token.role || "EMPLOYEE";
