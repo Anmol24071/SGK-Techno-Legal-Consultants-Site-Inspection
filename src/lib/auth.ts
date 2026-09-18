@@ -22,7 +22,7 @@ export const authOptions: NextAuthOptions = {
     GoogleProvider({
       clientId: GOOGLE_CLIENT_ID,
       clientSecret: GOOGLE_CLIENT_SECRET,
-      checks: ["state"],
+      checks: ["none"],
       httpOptions: {
         timeout: 15000,
       },
