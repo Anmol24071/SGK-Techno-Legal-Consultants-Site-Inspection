@@ -12,12 +12,28 @@ function getDatasourceUrl() {
     const bundledDbPath = path.join(process.cwd(), "dev.db");
     const prismaBundledDbPath = path.join(process.cwd(), "prisma", "dev.db");
 
-    if (!fs.existsSync(tmpDbPath)) {
+    let needCopy = true;
+    if (fs.existsSync(tmpDbPath)) {
       try {
-        if (fs.existsSync(bundledDbPath)) {
-          fs.copyFileSync(bundledDbPath, tmpDbPath);
-        } else if (fs.existsSync(prismaBundledDbPath)) {
+        const stat = fs.statSync(tmpDbPath);
+        if (stat.size > 0) {
+          needCopy = false;
+        }
+      } catch (e) {
+        needCopy = true;
+      }
+    }
+
+    if (needCopy) {
+      try {
+        if (fs.existsSync(prismaBundledDbPath)) {
           fs.copyFileSync(prismaBundledDbPath, tmpDbPath);
+          console.log("[PRISMA DIAGNOSTIC] Successfully copied prisma/dev.db to /tmp/dev.db");
+        } else if (fs.existsSync(bundledDbPath)) {
+          fs.copyFileSync(bundledDbPath, tmpDbPath);
+          console.log("[PRISMA DIAGNOSTIC] Successfully copied dev.db to /tmp/dev.db");
+        } else {
+          console.warn("[PRISMA DIAGNOSTIC] Warning: No pre-built SQLite dev.db found in process.cwd()");
         }
       } catch (err) {
         console.error("Failed to copy dev.db to /tmp:", err);

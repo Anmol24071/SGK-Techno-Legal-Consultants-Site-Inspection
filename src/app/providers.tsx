@@ -51,6 +51,11 @@ function InnerSessionProvider({ children }: { children: React.ReactNode }) {
         localStorage.setItem("sgk_user_session", JSON.stringify(u));
         setLocalUser(u);
       } catch (e) {}
+    } else if (nextAuthStatus === "unauthenticated") {
+      try {
+        localStorage.removeItem("sgk_user_session");
+      } catch (e) {}
+      setLocalUser(null);
     }
   }, [nextAuthStatus, nextAuthSession]);
 
