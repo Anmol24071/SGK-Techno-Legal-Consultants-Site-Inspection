@@ -12,9 +12,20 @@ function LoginForm() {
   const searchParams = useSearchParams();
   const error = searchParams.get("error");
 
+  const rawCallbackUrl = searchParams.get("callbackUrl");
+  const isSafeInternalPath = (path: string | null): boolean => {
+    if (!path) return false;
+    return path.startsWith("/") && !path.startsWith("//") && !path.startsWith("/\\");
+  };
+  const safeCallbackUrl = isSafeInternalPath(rawCallbackUrl) && rawCallbackUrl !== "/" ? rawCallbackUrl : null;
+
   useEffect(() => {
     if (status === "authenticated" && session?.user) {
       const user = session.user as CustomUser;
+      if (safeCallbackUrl) {
+        router.push(safeCallbackUrl);
+        return;
+      }
       if (user.role === "ADMIN") {
         router.push("/admin/dashboard");
       } else if (user.status === "APPROVED") {
@@ -25,10 +36,11 @@ function LoginForm() {
         router.push("/denied");
       }
     }
-  }, [session, status, router]);
+  }, [session, status, router, safeCallbackUrl]);
 
   const handleGoogleSignIn = () => {
-    signIn("google", { callbackUrl: "/" });
+    const destination = safeCallbackUrl ?? "/admin/dashboard";
+    signIn("google", { callbackUrl: destination });
   };
 
   return (
