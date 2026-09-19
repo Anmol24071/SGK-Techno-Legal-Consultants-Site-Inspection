@@ -74,17 +74,20 @@ function InnerSessionProvider({ children }: { children: React.ReactNode }) {
     }
   };
 
+  // NextAuth is authoritative for session state
   let session: { user: CustomUser } | null = null;
-  let status: "authenticated" | "unauthenticated" | "loading" = "unauthenticated";
+  let status: "authenticated" | "unauthenticated" | "loading" = "loading";
 
-  if (localUser) {
-    session = { user: localUser };
-    status = "authenticated";
-  } else if (nextAuthStatus === "authenticated" && nextAuthSession?.user) {
-    session = nextAuthSession as any;
-    status = "authenticated";
-  } else if (loading || nextAuthStatus === "loading") {
+  if (nextAuthStatus === "loading") {
     status = "loading";
+    session = null;
+  } else if (nextAuthStatus === "authenticated" && nextAuthSession?.user) {
+    status = "authenticated";
+    session = nextAuthSession as any;
+  } else {
+    // nextAuthStatus === "unauthenticated"
+    status = "unauthenticated";
+    session = null;
   }
 
   return (

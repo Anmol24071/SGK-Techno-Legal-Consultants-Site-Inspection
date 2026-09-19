@@ -26,9 +26,16 @@ export default function AdminDashboardPage() {
   const [actionLoading, setActionLoading] = useState<string | null>(null);
 
   useEffect(() => {
+    if (sessionStatus === "loading") {
+      return;
+    }
+
     if (sessionStatus === "unauthenticated") {
       router.push("/");
-    } else if (session?.user) {
+      return;
+    }
+
+    if (sessionStatus === "authenticated" && session?.user) {
       const user = session.user as any;
       if (user.role !== "ADMIN") {
         if (user.status === "APPROVED") {
