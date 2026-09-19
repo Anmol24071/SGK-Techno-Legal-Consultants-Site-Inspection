@@ -1,56 +1,82 @@
 import { withAuth } from "next-auth/middleware";
-import { NextResponse } from "next/server";
+import { NextFetchEvent, NextRequest, NextResponse } from "next/server";
 
-export default withAuth(
-  function middleware(req) {
-    const token = req.nextauth.token;
-    const pathname = req.nextUrl.pathname;
+export default function middleware(req: NextRequest, event: NextFetchEvent) {
+  const hasSecureCookie =
+    req.cookies.has("__Secure-next-auth.session-token") ||
+    req.cookies.has("__Secure-next-auth.session-token.0");
 
-    if (!token) {
-      return NextResponse.redirect(new URL("/", req.url));
-    }
+  const hasInsecureCookie =
+    req.cookies.has("next-auth.session-token") ||
+    req.cookies.has("next-auth.session-token.0");
 
-    const role = token.role as string;
-    const status = token.status as string;
+  const isProduction =
+    process.env.NODE_ENV === "production" || Boolean(process.env.VERCEL);
 
-    // 1. Admin route protection
-    if (pathname.startsWith("/admin")) {
-      if (role !== "ADMIN") {
-        if (status === "APPROVED") {
-          return NextResponse.redirect(new URL("/employee/dashboard", req.url));
-        } else if (status === "PENDING") {
+  const cookieName = hasSecureCookie
+    ? "__Secure-next-auth.session-token"
+    : hasInsecureCookie
+    ? "next-auth.session-token"
+    : isProduction
+    ? "__Secure-next-auth.session-token"
+    : "next-auth.session-token";
+
+  return withAuth(
+    function middleware(req) {
+      const token = req.nextauth.token;
+      const pathname = req.nextUrl.pathname;
+
+      if (!token) {
+        return NextResponse.redirect(new URL("/", req.url));
+      }
+
+      const role = token.role as string;
+      const status = token.status as string;
+
+      // 1. Admin route protection
+      if (pathname.startsWith("/admin")) {
+        if (role !== "ADMIN") {
+          if (status === "APPROVED") {
+            return NextResponse.redirect(new URL("/employee/dashboard", req.url));
+          } else if (status === "PENDING") {
+            return NextResponse.redirect(new URL("/pending", req.url));
+          } else {
+            return NextResponse.redirect(new URL("/denied", req.url));
+          }
+        }
+      }
+
+      // 2. Employee route protection
+      if (pathname.startsWith("/employee")) {
+        if (status === "PENDING") {
           return NextResponse.redirect(new URL("/pending", req.url));
-        } else {
+        } else if (status === "DENIED" || status === "REVOKED") {
           return NextResponse.redirect(new URL("/denied", req.url));
         }
       }
-    }
 
-    // 2. Employee route protection
-    if (pathname.startsWith("/employee")) {
-      if (status === "PENDING") {
-        return NextResponse.redirect(new URL("/pending", req.url));
-      } else if (status === "DENIED" || status === "REVOKED") {
-        return NextResponse.redirect(new URL("/denied", req.url));
-      }
-    }
-
-    return NextResponse.next();
-  },
-  {
-    secret: process.env.NEXTAUTH_SECRET,
-    callbacks: {
-      authorized: ({ token, req }) => {
-        const pathname = req.nextUrl.pathname;
-        if (pathname.startsWith("/api/auth")) return true;
-        return !!token;
+      return NextResponse.next();
+    },
+    {
+      secret: process.env.NEXTAUTH_SECRET,
+      cookies: {
+        sessionToken: {
+          name: cookieName,
+        },
       },
-    },
-    pages: {
-      signIn: "/",
-    },
-  }
-);
+      callbacks: {
+        authorized: ({ token, req }) => {
+          const pathname = req.nextUrl.pathname;
+          if (pathname.startsWith("/api/auth")) return true;
+          return !!token;
+        },
+      },
+      pages: {
+        signIn: "/",
+      },
+    }
+  )(req as any, event);
+}
 
 export const config = {
   matcher: [
@@ -60,3 +86,4 @@ export const config = {
     "/denied",
   ],
 };
+
