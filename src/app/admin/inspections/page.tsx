@@ -36,14 +36,14 @@ function AdminInspectionsContent() {
       const inspData = await inspRes.json();
       const empData = await empRes.json();
       setInspections(inspData.inspections || []);
-      const validInspectors = (empData.employees || []).filter(
-        (e: any) => e.status !== "DENIED" && e.status !== "REVOKED"
+      const approvedInspectors = (empData.employees || []).filter(
+        (e: any) => e.status === "APPROVED"
       );
-      setEmployees(validInspectors);
-      if (validInspectors.length > 0) {
+      setEmployees(approvedInspectors);
+      if (approvedInspectors.length > 0) {
         setFormData((prev) => ({
           ...prev,
-          assignedToId: prev.assignedToId || validInspectors[0].id,
+          assignedToId: prev.assignedToId || approvedInspectors[0].id,
         }));
       }
     } catch (err) {
@@ -241,11 +241,11 @@ function AdminInspectionsContent() {
                   className="w-full bg-slate-50 border border-slate-300 rounded-xl p-3 focus:ring-2 focus:ring-blue-500 focus:outline-none text-xs font-medium"
                 >
                   {employees.length === 0 ? (
-                    <option value="">No inspectors available</option>
+                    <option value="">No approved inspectors available</option>
                   ) : (
                     employees.map((emp) => (
                       <option key={emp.id} value={emp.id}>
-                        {emp.name} ({emp.email}) {emp.role === "ADMIN" ? "★ Admin (Self-Inspection)" : emp.status === "PENDING" ? "⏳ Pending Approval" : "✓ Approved Inspector"}
+                        {emp.name} ({emp.email}) {emp.role === "ADMIN" ? "[ Admin (Self) ]" : "[ Approved Inspector ]"}
                       </option>
                     ))
                   )}

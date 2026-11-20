@@ -38,15 +38,9 @@ export async function GET(req: Request) {
 
   let whereClause: any;
   if (includeAdmins) {
-    // For assigning inspections: return Admins and all non-revoked Employees
+    // For assigning inspections: only return Approved users (Admin and Approved Employees)
     whereClause = {
-      OR: [
-        { role: "ADMIN" },
-        { role: "EMPLOYEE" },
-      ],
-      NOT: {
-        status: { in: ["DENIED", "REVOKED"] },
-      },
+      status: "APPROVED",
     };
   } else {
     // For employee directory list: return all employees
