@@ -36,10 +36,15 @@ function AdminInspectionsContent() {
       const inspData = await inspRes.json();
       const empData = await empRes.json();
       setInspections(inspData.inspections || []);
-      const approvedEmps = (empData.employees || []).filter((e: any) => e.status === "APPROVED");
-      setEmployees(approvedEmps);
-      if (approvedEmps.length > 0) {
-        setFormData((prev) => ({ ...prev, assignedToId: approvedEmps[0].id }));
+      const validInspectors = (empData.employees || []).filter(
+        (e: any) => e.status !== "DENIED" && e.status !== "REVOKED"
+      );
+      setEmployees(validInspectors);
+      if (validInspectors.length > 0) {
+        setFormData((prev) => ({
+          ...prev,
+          assignedToId: prev.assignedToId || validInspectors[0].id,
+        }));
       }
     } catch (err) {
       console.error("Failed to load inspections:", err);
@@ -105,7 +110,12 @@ function AdminInspectionsContent() {
         </div>
 
         <button
-          onClick={() => setShowModal(true)}
+          onClick={() => {
+            if (!formData.assignedToId && employees.length > 0) {
+              setFormData((prev) => ({ ...prev, assignedToId: employees[0].id }));
+            }
+            setShowModal(true);
+          }}
           className="inline-flex items-center gap-2 bg-blue-600 hover:bg-blue-700 text-white font-semibold px-4 py-2.5 rounded-xl shadow border border-blue-700 transition-colors text-xs"
         >
           <Plus className="w-4 h-4" />
@@ -223,7 +233,7 @@ function AdminInspectionsContent() {
               </div>
 
               <div>
-                <label className="block font-bold text-slate-700 mb-1">Assign to Approved Inspector *</label>
+                <label className="block font-bold text-slate-700 mb-1">Assign to Inspector *</label>
                 <select
                   required
                   value={formData.assignedToId}
@@ -231,11 +241,11 @@ function AdminInspectionsContent() {
                   className="w-full bg-slate-50 border border-slate-300 rounded-xl p-3 focus:ring-2 focus:ring-blue-500 focus:outline-none text-xs font-medium"
                 >
                   {employees.length === 0 ? (
-                    <option value="">No approved employees available</option>
+                    <option value="">No inspectors available</option>
                   ) : (
                     employees.map((emp) => (
                       <option key={emp.id} value={emp.id}>
-                        {emp.name} ({emp.email}) {emp.role === "ADMIN" ? "[ ADMIN (Self) ]" : ""}
+                        {emp.name} ({emp.email}) {emp.role === "ADMIN" ? "★ Admin (Self-Inspection)" : emp.status === "PENDING" ? "⏳ Pending Approval" : "✓ Approved Inspector"}
                       </option>
                     ))
                   )}

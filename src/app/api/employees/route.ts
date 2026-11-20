@@ -13,13 +13,49 @@ export async function GET(req: Request) {
   const { searchParams } = new URL(req.url);
   const includeAdmins = searchParams.get("includeAdmins") === "true";
 
-  const whereClause = includeAdmins
-    ? { status: "APPROVED" }
-    : { role: "EMPLOYEE" };
+  // Ensure current admin user exists in DB with role: ADMIN and status: APPROVED
+  if (currentUser.email) {
+    try {
+      await prisma.user.upsert({
+        where: { email: currentUser.email.toLowerCase() },
+        update: {
+          role: "ADMIN",
+          status: "APPROVED",
+        },
+        create: {
+          id: currentUser.id && currentUser.id !== "temp-id" ? currentUser.id : undefined,
+          name: currentUser.name || "Administrator",
+          email: currentUser.email.toLowerCase(),
+          role: "ADMIN",
+          status: "APPROVED",
+          image: currentUser.image || null,
+        },
+      });
+    } catch (upsertErr) {
+      console.warn("Could not upsert admin user record:", upsertErr);
+    }
+  }
 
-  const employees = await prisma.user.findMany({
+  let whereClause: any;
+  if (includeAdmins) {
+    // For assigning inspections: return Admins and all non-revoked Employees
+    whereClause = {
+      OR: [
+        { role: "ADMIN" },
+        { role: "EMPLOYEE" },
+      ],
+      NOT: {
+        status: { in: ["DENIED", "REVOKED"] },
+      },
+    };
+  } else {
+    // For employee directory list: return all employees
+    whereClause = { role: "EMPLOYEE" };
+  }
+
+  let employees = await prisma.user.findMany({
     where: whereClause,
-    orderBy: { createdAt: "desc" },
+    orderBy: [{ role: "asc" }, { createdAt: "desc" }],
     select: {
       id: true,
       name: true,
@@ -36,6 +72,51 @@ export async function GET(req: Request) {
       },
     },
   });
+
+  // If includeAdmins is true, ensure current admin user is guaranteed to be in the list
+  if (includeAdmins) {
+    const hasAdmin = employees.some(
+      (e) => e.email.toLowerCase() === currentUser.email.toLowerCase() || e.id === currentUser.id
+    );
+    if (!hasAdmin) {
+      const adminInDb = await prisma.user.findUnique({
+        where: { email: currentUser.email.toLowerCase() },
+        select: {
+          id: true,
+          name: true,
+          email: true,
+          image: true,
+          role: true,
+          status: true,
+          lastLoginAt: true,
+          createdAt: true,
+          _count: {
+            select: {
+              assignedInspections: true,
+            },
+          },
+        },
+      });
+      if (adminInDb) {
+        employees = [adminInDb, ...employees];
+      } else {
+        employees = [
+          {
+            id: currentUser.id,
+            name: currentUser.name || "Administrator (Self)",
+            email: currentUser.email,
+            image: currentUser.image || null,
+            role: "ADMIN",
+            status: "APPROVED",
+            lastLoginAt: new Date(),
+            createdAt: new Date(),
+            _count: { assignedInspections: 0 },
+          },
+          ...employees,
+        ];
+      }
+    }
+  }
 
   return NextResponse.json({ employees });
 }

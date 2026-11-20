@@ -54,6 +54,22 @@ export async function POST(req: Request) {
     return NextResponse.json({ error: "Assigned employee not found" }, { status: 404 });
   }
 
+  // Auto-approve pending employee if admin assigns them an inspection
+  if (assignedUser.status === "PENDING") {
+    try {
+      await prisma.user.update({
+        where: { id: assignedUser.id },
+        data: { status: "APPROVED" },
+      });
+      await prisma.accessRequest.updateMany({
+        where: { userId: assignedUser.id, status: "PENDING" },
+        data: { status: "APPROVED", reviewedAt: new Date(), reviewedBy: currentUser.email },
+      });
+    } catch (e) {
+      console.warn("Could not auto-approve assigned employee:", e);
+    }
+  }
+
   const inspection = await prisma.inspection.create({
     data: {
       title,
