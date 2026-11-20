@@ -17,7 +17,7 @@ export function Step10Submit({ data, submitting, onSubmit }: Step10Props) {
       </div>
 
       <div className="max-w-md mx-auto space-y-2">
-        <h3 className="text-xl font-bold text-slate-900">Step 10: Final Inspection Submission</h3>
+        <h3 className="text-xl font-bold text-slate-900">Step 11: Final Inspection Submission</h3>
         <p className="text-xs text-slate-600 leading-relaxed">
           You are about to permanently submit this site inspection report for <strong>{data.buildingName || data.title}</strong>.
         </p>

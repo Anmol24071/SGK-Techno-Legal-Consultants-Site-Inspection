@@ -8,3 +8,4 @@ prisma/*.db
 .DS_Store
 .firebase
 scratch
+*.tsbuildinfo

@@ -98,6 +98,20 @@ export function InspectionReportPdf({ inspection }: InspectionReportPdfProps) {
             <span className="text-slate-500 block uppercase text-[10px] font-bold">Date & Time</span>
             <strong className="text-slate-900">{new Date(inspection.updatedAt).toLocaleString()}</strong>
           </div>
+
+          {inspection.ratePerSqFt && (
+            <div>
+              <span className="text-slate-500 block uppercase text-[10px] font-bold">Rate per Sq. Ft. Built Up</span>
+              <strong className="text-blue-900 text-sm">₹ {Number(inspection.ratePerSqFt).toLocaleString("en-IN")} / sq. ft.</strong>
+            </div>
+          )}
+
+          {inspection.totalRate && (
+            <div>
+              <span className="text-slate-500 block uppercase text-[10px] font-bold">Total Property Valuation</span>
+              <strong className="text-emerald-700 text-sm font-black">₹ {Number(inspection.totalRate).toLocaleString("en-IN")}</strong>
+            </div>
+          )}
         </div>
 
         {/* 1. Site Information */}
@@ -157,6 +171,43 @@ export function InspectionReportPdf({ inspection }: InspectionReportPdfProps) {
             <div className="bg-blue-50 border border-blue-200 p-3 rounded-lg font-bold text-blue-900 flex justify-between">
               <span>TOTAL CARPET AREA OF FLAT:</span>
               <span>{inspection.carpetDetail.carpetArea} {inspection.carpetDetail.unit}</span>
+            </div>
+          )}
+
+          {/* Rate per Square Feet Built Up & Total Valuation Box */}
+          {(inspection.ratePerSqFt || inspection.totalRate) && (
+            <div className="bg-gradient-to-r from-blue-50 via-slate-50 to-emerald-50 border-2 border-blue-900/20 rounded-xl p-5 space-y-3">
+              <div className="flex items-center justify-between border-b border-slate-300 pb-2">
+                <h3 className="text-xs font-black uppercase tracking-wider text-blue-900">
+                  RATE PER SQUARE FEET BUILT UP & PROPERTY VALUATION
+                </h3>
+                <span className="text-[10px] font-bold text-emerald-800 bg-emerald-100 px-2.5 py-0.5 rounded-full uppercase">
+                  Valuation Assessment
+                </span>
+              </div>
+
+              <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+                <div className="bg-white p-3 rounded-lg border border-slate-200">
+                  <span className="text-slate-500 block text-[10px] font-bold uppercase">Area of Flat (Built Up)</span>
+                  <span className="text-sm font-extrabold text-slate-900">
+                    {inspection.builtUpArea || inspection.carpetDetail?.carpetArea || "-"} sq. ft.
+                  </span>
+                </div>
+
+                <div className="bg-white p-3 rounded-lg border border-slate-200">
+                  <span className="text-slate-500 block text-[10px] font-bold uppercase">Rate per Sq. Ft. Built Up</span>
+                  <span className="text-sm font-extrabold text-blue-900">
+                    {inspection.ratePerSqFt ? `₹ ${Number(inspection.ratePerSqFt).toLocaleString("en-IN")} / sq. ft.` : "Not Specified"}
+                  </span>
+                </div>
+
+                <div className="bg-emerald-100/80 p-3 rounded-lg border border-emerald-300">
+                  <span className="text-emerald-800 block text-[10px] font-bold uppercase">Total Rate / Valuation</span>
+                  <span className="text-base font-black text-emerald-900">
+                    {inspection.totalRate ? `₹ ${Number(inspection.totalRate).toLocaleString("en-IN")}` : "N/A"}
+                  </span>
+                </div>
+              </div>
             </div>
           )}
         </div>

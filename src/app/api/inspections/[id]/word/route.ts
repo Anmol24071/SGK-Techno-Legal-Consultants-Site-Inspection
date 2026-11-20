@@ -22,7 +22,12 @@ import {
 async function getImageBuffer(fileUrl?: string | null): Promise<Buffer | null> {
   if (!fileUrl) return null;
   try {
-    if (fileUrl.startsWith("/uploads/")) {
+    if (fileUrl.startsWith("data:")) {
+      const base64Data = fileUrl.split(",")[1];
+      if (base64Data) {
+        return Buffer.from(base64Data, "base64");
+      }
+    } else if (fileUrl.startsWith("/uploads/")) {
       const filePath = path.join(process.cwd(), "public", fileUrl);
       if (fs.existsSync(filePath)) {
         return fs.readFileSync(filePath);
@@ -334,10 +339,41 @@ export async function GET(
     if (inspection.carpetDetail) {
       docChildren.push(
         new Paragraph({
-          spacing: { before: 120, after: 300 },
+          spacing: { before: 120, after: 120 },
           children: [
             new TextRun({ text: "TOTAL CARPET AREA OF FLAT: ", bold: true, color: "1E3A8A", size: 20 }),
             new TextRun({ text: `${inspection.carpetDetail.carpetArea} ${inspection.carpetDetail.unit}`, bold: true, size: 20 }),
+          ],
+        })
+      );
+    }
+
+    const ratePerSqFt = (inspection as any)?.ratePerSqFt;
+    const totalRate = (inspection as any)?.totalRate;
+
+    if (ratePerSqFt || totalRate) {
+      docChildren.push(
+        new Paragraph({
+          spacing: { before: 80, after: 80 },
+          children: [
+            new TextRun({ text: "RATE PER SQ. FT. BUILT UP: ", bold: true, color: "1E3A8A", size: 20 }),
+            new TextRun({
+              text: ratePerSqFt ? `₹ ${Number(ratePerSqFt).toLocaleString("en-IN")} / sq. ft.` : "N/A",
+              bold: true,
+              size: 20,
+            }),
+          ],
+        }),
+        new Paragraph({
+          spacing: { before: 80, after: 300 },
+          children: [
+            new TextRun({ text: "TOTAL RATE / VALUATION: ", bold: true, color: "047857", size: 20 }),
+            new TextRun({
+              text: totalRate ? `₹ ${Number(totalRate).toLocaleString("en-IN")}` : "N/A",
+              bold: true,
+              color: "047857",
+              size: 22,
+            }),
           ],
         })
       );

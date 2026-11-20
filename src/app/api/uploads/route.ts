@@ -10,6 +10,16 @@ export async function POST(req: Request) {
   }
 
   try {
+    const contentType = req.headers.get("content-type") || "";
+
+    // Support direct JSON upload of base64 data URL
+    if (contentType.includes("application/json")) {
+      const body = await req.json();
+      if (body.dataUrl) {
+        return NextResponse.json({ success: true, url: body.dataUrl, filename: "image.jpg" });
+      }
+    }
+
     const formData = await req.formData();
     const file = formData.get("file") as File | null;
 
@@ -24,24 +34,32 @@ export async function POST(req: Request) {
 
     const bytes = await file.arrayBuffer();
     const buffer = Buffer.from(bytes);
-
-    // Create uploads directory inside public if it doesn't exist
-    const uploadsDir = path.join(process.cwd(), "public", "uploads");
-    if (!fs.existsSync(uploadsDir)) {
-      fs.mkdirSync(uploadsDir, { recursive: true });
-    }
+    const fileType = file.type || "image/jpeg";
+    const dataUrlFallback = `data:${fileType};base64,${buffer.toString("base64")}`;
 
     const fileExt = path.extname(file.name) || ".jpg";
     const filename = `img_${Date.now()}_${Math.random().toString(36).substring(2, 8)}${fileExt}`;
-    const filePath = path.join(uploadsDir, filename);
 
-    fs.writeFileSync(filePath, buffer);
+    // Try saving to public/uploads if filesystem is writable
+    try {
+      const uploadsDir = path.join(process.cwd(), "public", "uploads");
+      if (!fs.existsSync(uploadsDir)) {
+        fs.mkdirSync(uploadsDir, { recursive: true });
+      }
 
-    const publicUrl = `/uploads/${filename}`;
+      const filePath = path.join(uploadsDir, filename);
+      fs.writeFileSync(filePath, buffer);
 
-    return NextResponse.json({ success: true, url: publicUrl, filename });
+      const publicUrl = `/uploads/${filename}`;
+      return NextResponse.json({ success: true, url: publicUrl, filename });
+    } catch (fsErr) {
+      // Serverless or read-only filesystem (e.g. Vercel EROFS or Docker permission)
+      // Seamlessly fallback to data URL so photo attachment never fails
+      console.warn("Filesystem write restricted, using Data URL storage fallback:", fsErr);
+      return NextResponse.json({ success: true, url: dataUrlFallback, filename });
+    }
   } catch (err: any) {
     console.error("Upload error:", err);
-    return NextResponse.json({ error: "Failed to upload file" }, { status: 500 });
+    return NextResponse.json({ error: "Failed to upload file: " + (err.message || "") }, { status: 500 });
   }
 }

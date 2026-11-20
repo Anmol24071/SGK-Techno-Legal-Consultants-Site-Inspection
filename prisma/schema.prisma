@@ -52,6 +52,10 @@ model Inspection {
   flatFloor       Int?
   status          String   @default("ASSIGNED") // ASSIGNED | IN_PROGRESS | SUBMITTED | REVIEWED
 
+  ratePerSqFt     Float?
+  totalRate       Float?
+  builtUpArea     Float?
+
   assignedToId    String
   assignedTo      User     @relation("AssignedInspector", fields: [assignedToId], references: [id])
   createdById     String

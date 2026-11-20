@@ -117,6 +117,10 @@ export interface FullInspectionData {
   createdAt: string;
   updatedAt: string;
 
+  ratePerSqFt?: number;
+  totalRate?: number;
+  builtUpArea?: number;
+
   rooms?: RoomMeasurement[];
   compassDirections?: CompassDirectionDTO[];
   gpsLocation?: GpsLocationDTO | null;

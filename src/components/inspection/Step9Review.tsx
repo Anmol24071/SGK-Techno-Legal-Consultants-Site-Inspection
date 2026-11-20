@@ -1,7 +1,7 @@
 "use client";
 
 import React from "react";
-import { CheckCircle2, Edit3, MapPin, Building2, Home, Ruler, Compass, Camera, Maximize2, Building, Image } from "lucide-react";
+import { CheckCircle2, Edit3, MapPin, Building2, Home, Ruler, Compass, Camera, Maximize2, Building, Image, IndianRupee, Calculator } from "lucide-react";
 
 interface Step9Props {
   data: any;
@@ -20,15 +20,19 @@ export function Step9Review({ data, onGoToStep }: Step9Props) {
   const flatSketch = sketches.find((s: any) => s.type === "FLAT");
   const bldgSketch = sketches.find((s: any) => s.type === "BUILDING");
 
+  const builtUpArea = data.builtUpArea || data.carpetDetail?.carpetArea;
+  const ratePerSqFt = data.ratePerSqFt;
+  const totalRate = data.totalRate;
+
   return (
     <div className="space-y-6">
       <div className="border-b border-slate-200 pb-3">
         <h3 className="text-lg font-bold text-slate-900 flex items-center gap-2">
           <CheckCircle2 className="w-5 h-5 text-emerald-600" />
-          <span>STEP 9 — REVIEW INSPECTION</span>
+          <span>STEP 10 — REVIEW INSPECTION</span>
         </h3>
         <p className="text-xs text-slate-500">
-          Review all 11 inspection sections below before proceeding to final submission. Use the [ EDIT ] button on any section to make updates.
+          Review all inspection sections below before proceeding to final submission. Use the [ EDIT ] button on any section to make updates.
         </p>
       </div>
 
@@ -155,7 +159,7 @@ export function Step9Review({ data, onGoToStep }: Step9Props) {
           )}
         </div>
 
-        {/* 6. Carpet Area */}
+        {/* 6. Carpet Area & Landmarks */}
         <div className="bg-slate-50 border border-slate-200 rounded-xl p-4 space-y-2">
           <div className="flex items-center justify-between border-b border-slate-200 pb-2">
             <h4 className="font-bold text-slate-900 flex items-center gap-2">
@@ -172,37 +176,12 @@ export function Step9Review({ data, onGoToStep }: Step9Props) {
           </div>
         </div>
 
-        {/* 7. Landmarks */}
-        <div className="bg-slate-50 border border-slate-200 rounded-xl p-4 space-y-2">
-          <div className="flex items-center justify-between border-b border-slate-200 pb-2">
-            <h4 className="font-bold text-slate-900 flex items-center gap-2">
-              <Building className="w-4 h-4 text-purple-600" />
-              <span>7. Neighbourhood Landmarks (Q12)</span>
-            </h4>
-            <button onClick={() => onGoToStep(6)} className="bg-white border border-slate-300 hover:bg-slate-100 text-blue-700 font-bold px-3 py-1 rounded-lg text-xs flex items-center gap-1 shadow-sm">
-              <Edit3 className="w-3.5 h-3.5" />
-              <span>[ EDIT ]</span>
-            </button>
-          </div>
-          {landmarks.length === 0 ? (
-            <p className="text-slate-400 italic">No landmarks added.</p>
-          ) : (
-            <div className="space-y-1">
-              {landmarks.map((l, idx) => (
-                <div key={idx} className="text-slate-700 font-medium">
-                  • <strong>{l.name}</strong> {l.distance ? `(${l.distance})` : ""} {l.description ? `- ${l.description}` : ""}
-                </div>
-              ))}
-            </div>
-          )}
-        </div>
-
-        {/* 8. Nearby Facilities */}
+        {/* 7. Nearby Facilities */}
         <div className="bg-slate-50 border border-slate-200 rounded-xl p-4 space-y-2">
           <div className="flex items-center justify-between border-b border-slate-200 pb-2">
             <h4 className="font-bold text-slate-900 flex items-center gap-2">
               <Building className="w-4 h-4 text-emerald-600" />
-              <span>8. Nearby Facilities (Q13 - Q23)</span>
+              <span>7. Nearby Facilities (Q13 - Q23)</span>
             </h4>
             <button onClick={() => onGoToStep(7)} className="bg-white border border-slate-300 hover:bg-slate-100 text-blue-700 font-bold px-3 py-1 rounded-lg text-xs flex items-center gap-1 shadow-sm">
               <Edit3 className="w-3.5 h-3.5" />
@@ -222,14 +201,48 @@ export function Step9Review({ data, onGoToStep }: Step9Props) {
           )}
         </div>
 
-        {/* 9. Flat Sketch */}
+        {/* 8. Rate per Square Feet Built Up & Total Valuation (NEW SECTION!) */}
+        <div className="bg-emerald-50/60 border border-emerald-300 rounded-xl p-4 space-y-2">
+          <div className="flex items-center justify-between border-b border-emerald-200 pb-2">
+            <h4 className="font-bold text-emerald-950 flex items-center gap-2">
+              <IndianRupee className="w-4 h-4 text-emerald-700" />
+              <span>8. Rate per Square Feet Built Up & Total Valuation (Q24)</span>
+            </h4>
+            <button onClick={() => onGoToStep(8)} className="bg-white border border-emerald-300 hover:bg-emerald-100 text-emerald-800 font-bold px-3 py-1 rounded-lg text-xs flex items-center gap-1 shadow-sm">
+              <Edit3 className="w-3.5 h-3.5" />
+              <span>[ EDIT ]</span>
+            </button>
+          </div>
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 text-slate-800">
+            <div>
+              <span className="text-slate-500 block text-[11px] font-semibold">Area of Flat (Built Up):</span>
+              <strong className="text-slate-900 text-sm">
+                {builtUpArea ? `${builtUpArea} sq. ft.` : "Not entered"}
+              </strong>
+            </div>
+            <div>
+              <span className="text-slate-500 block text-[11px] font-semibold">Rate per Square Feet Built Up:</span>
+              <strong className="text-blue-900 text-sm">
+                {ratePerSqFt ? `₹ ${Number(ratePerSqFt).toLocaleString("en-IN")} / sq. ft.` : "Not entered"}
+              </strong>
+            </div>
+            <div>
+              <span className="text-slate-500 block text-[11px] font-semibold">Total Rate / Valuation:</span>
+              <strong className="text-emerald-700 text-base font-black">
+                {totalRate ? `₹ ${Number(totalRate).toLocaleString("en-IN")}` : "N/A"}
+              </strong>
+            </div>
+          </div>
+        </div>
+
+        {/* 9. Rough Sketch of Flat */}
         <div className="bg-slate-50 border border-slate-200 rounded-xl p-4 space-y-2">
           <div className="flex items-center justify-between border-b border-slate-200 pb-2">
             <h4 className="font-bold text-slate-900 flex items-center gap-2">
               <Image className="w-4 h-4 text-blue-600" />
-              <span>9. Rough Sketch of Flat (Q24)</span>
+              <span>9. Rough Sketch of Flat (Q25)</span>
             </h4>
-            <button onClick={() => onGoToStep(8)} className="bg-white border border-slate-300 hover:bg-slate-100 text-blue-700 font-bold px-3 py-1 rounded-lg text-xs flex items-center gap-1 shadow-sm">
+            <button onClick={() => onGoToStep(9)} className="bg-white border border-slate-300 hover:bg-slate-100 text-blue-700 font-bold px-3 py-1 rounded-lg text-xs flex items-center gap-1 shadow-sm">
               <Edit3 className="w-3.5 h-3.5" />
               <span>[ EDIT ]</span>
             </button>
@@ -241,14 +254,14 @@ export function Step9Review({ data, onGoToStep }: Step9Props) {
           )}
         </div>
 
-        {/* 10. Building Sketch */}
+        {/* 10. Rough Sketch of Building */}
         <div className="bg-slate-50 border border-slate-200 rounded-xl p-4 space-y-2">
           <div className="flex items-center justify-between border-b border-slate-200 pb-2">
             <h4 className="font-bold text-slate-900 flex items-center gap-2">
               <Image className="w-4 h-4 text-purple-600" />
-              <span>10. Rough Sketch of Building (Q25)</span>
+              <span>10. Rough Sketch of Building (Q26)</span>
             </h4>
-            <button onClick={() => onGoToStep(8)} className="bg-white border border-slate-300 hover:bg-slate-100 text-blue-700 font-bold px-3 py-1 rounded-lg text-xs flex items-center gap-1 shadow-sm">
+            <button onClick={() => onGoToStep(9)} className="bg-white border border-slate-300 hover:bg-slate-100 text-blue-700 font-bold px-3 py-1 rounded-lg text-xs flex items-center gap-1 shadow-sm">
               <Edit3 className="w-3.5 h-3.5" />
               <span>[ EDIT ]</span>
             </button>
@@ -265,9 +278,9 @@ export function Step9Review({ data, onGoToStep }: Step9Props) {
           <div className="flex items-center justify-between border-b border-slate-200 pb-2">
             <h4 className="font-bold text-slate-900 flex items-center gap-2">
               <Camera className="w-4 h-4 text-rose-600" />
-              <span>11. Site Photographs (Q26)</span>
+              <span>11. Site Photographs (Q27)</span>
             </h4>
-            <button onClick={() => onGoToStep(8)} className="bg-white border border-slate-300 hover:bg-slate-100 text-blue-700 font-bold px-3 py-1 rounded-lg text-xs flex items-center gap-1 shadow-sm">
+            <button onClick={() => onGoToStep(9)} className="bg-white border border-slate-300 hover:bg-slate-100 text-blue-700 font-bold px-3 py-1 rounded-lg text-xs flex items-center gap-1 shadow-sm">
               <Edit3 className="w-3.5 h-3.5" />
               <span>[ EDIT ]</span>
             </button>

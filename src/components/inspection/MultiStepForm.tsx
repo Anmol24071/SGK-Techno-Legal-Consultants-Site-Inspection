@@ -9,6 +9,7 @@ import { Step4Directions } from "./Step4Directions";
 import { Step5GpsLocation } from "./Step5GpsLocation";
 import { Step6CarpetArea } from "./Step6CarpetArea";
 import { Step7NearbyFacilities } from "./Step7NearbyFacilities";
+import { Step8RateValuation } from "./Step8RateValuation";
 import { Step8SketchesPhotos } from "./Step8SketchesPhotos";
 import { Step9Review } from "./Step9Review";
 import { Step10Submit } from "./Step10Submit";
@@ -27,6 +28,7 @@ const STEP_TITLES = [
   "GPS Location",
   "Carpet & Landmarks",
   "Nearby Facilities",
+  "Rate per Sq. Ft.",
   "Sketches & Photos",
   "Review",
   "Submit",
@@ -78,7 +80,7 @@ export function MultiStepForm({ inspectionId, initialData }: MultiStepFormProps)
 
   const handleNext = async () => {
     await saveDraft(false);
-    if (currentStep < 10) {
+    if (currentStep < 11) {
       setCurrentStep((prev) => prev + 1);
       window.scrollTo({ top: 0, behavior: "smooth" });
     }
@@ -118,7 +120,7 @@ export function MultiStepForm({ inspectionId, initialData }: MultiStepFormProps)
     }
   };
 
-  const progressPercentage = Math.round((currentStep / 10) * 100);
+  const progressPercentage = Math.round((currentStep / 11) * 100);
 
   return (
     <div className="space-y-6">
@@ -129,7 +131,7 @@ export function MultiStepForm({ inspectionId, initialData }: MultiStepFormProps)
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
           <div>
             <span className="text-[11px] font-bold text-blue-600 uppercase tracking-wider">
-              Step {currentStep} of 10: {STEP_TITLES[currentStep - 1]}
+              Step {currentStep} of 11: {STEP_TITLES[currentStep - 1]}
             </span>
             <h2 className="text-xl font-bold text-slate-900 mt-0.5">{formData.title}</h2>
           </div>
@@ -206,9 +208,10 @@ export function MultiStepForm({ inspectionId, initialData }: MultiStepFormProps)
         {currentStep === 5 && <Step5GpsLocation data={formData} onChange={handleFieldChange} />}
         {currentStep === 6 && <Step6CarpetArea data={formData} onChange={handleFieldChange} />}
         {currentStep === 7 && <Step7NearbyFacilities data={formData} onChange={handleFieldChange} />}
-        {currentStep === 8 && <Step8SketchesPhotos data={formData} onChange={handleFieldChange} />}
-        {currentStep === 9 && <Step9Review data={formData} onGoToStep={(s) => setCurrentStep(s)} />}
-        {currentStep === 10 && <Step10Submit data={formData} submitting={submitting} onSubmit={handleSubmitFinal} />}
+        {currentStep === 8 && <Step8RateValuation data={formData} onChange={handleFieldChange} />}
+        {currentStep === 9 && <Step8SketchesPhotos data={formData} onChange={handleFieldChange} />}
+        {currentStep === 10 && <Step9Review data={formData} onGoToStep={(s) => setCurrentStep(s)} />}
+        {currentStep === 11 && <Step10Submit data={formData} submitting={submitting} onSubmit={handleSubmitFinal} />}
       </div>
 
       {/* Bottom Sticky Action Bar (Mobile First) */}
@@ -224,10 +227,10 @@ export function MultiStepForm({ inspectionId, initialData }: MultiStepFormProps)
         </button>
 
         <span className="text-xs font-bold text-slate-400 hidden sm:inline">
-          Step {currentStep} of 10
+          Step {currentStep} of 11
         </span>
 
-        {currentStep < 10 ? (
+        {currentStep < 11 ? (
           <button
             type="button"
             onClick={handleNext}

@@ -3,6 +3,21 @@ import { getCurrentUser } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 import { logAuditEvent } from "@/lib/audit";
 
+let schemaChecked = false;
+async function ensureRateColumnsExist() {
+  if (schemaChecked) return;
+  try {
+    await prisma.$executeRawUnsafe(`
+      ALTER TABLE "Inspection" ADD COLUMN IF NOT EXISTS "ratePerSqFt" DOUBLE PRECISION;
+      ALTER TABLE "Inspection" ADD COLUMN IF NOT EXISTS "totalRate" DOUBLE PRECISION;
+      ALTER TABLE "Inspection" ADD COLUMN IF NOT EXISTS "builtUpArea" DOUBLE PRECISION;
+    `);
+    schemaChecked = true;
+  } catch (e) {
+    console.warn("Auto-migration check skipped or failed:", e);
+  }
+}
+
 
 export async function GET(
   req: Request,
@@ -12,6 +27,8 @@ export async function GET(
   if (!currentUser) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
+
+  await ensureRateColumnsExist();
 
   const { id } = params;
 
@@ -59,6 +76,8 @@ export async function PUT(
   const { id } = params;
   const body = await req.json();
 
+  await ensureRateColumnsExist();
+
   const inspection = await prisma.inspection.findUnique({ where: { id } });
   if (!inspection) {
     return NextResponse.json({ error: "Inspection not found" }, { status: 404 });
@@ -78,6 +97,9 @@ export async function PUT(
     totalFloors,
     flatFloor,
     status, // IN_PROGRESS | SUBMITTED | REVIEWED
+    ratePerSqFt,
+    totalRate,
+    builtUpArea,
     rooms,
     compassDirections,
     gpsLocation,
@@ -102,6 +124,9 @@ export async function PUT(
         totalFloors: totalFloors !== undefined ? (totalFloors ? Number(totalFloors) : null) : inspection.totalFloors,
         flatFloor: flatFloor !== undefined ? (flatFloor ? Number(flatFloor) : null) : inspection.flatFloor,
         status: status || inspection.status,
+        ratePerSqFt: ratePerSqFt !== undefined ? (ratePerSqFt ? Number(ratePerSqFt) : null) : (inspection as any).ratePerSqFt,
+        totalRate: totalRate !== undefined ? (totalRate ? Number(totalRate) : null) : (inspection as any).totalRate,
+        builtUpArea: builtUpArea !== undefined ? (builtUpArea ? Number(builtUpArea) : null) : (inspection as any).builtUpArea,
         submissionDate: status === "SUBMITTED" ? new Date() : inspection.submissionDate,
       },
     });
