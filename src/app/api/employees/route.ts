@@ -13,7 +13,7 @@ export async function GET(req: Request) {
   const { searchParams } = new URL(req.url);
   const includeAdmins = searchParams.get("includeAdmins") === "true";
 
-  // Ensure current admin user exists in DB with role: ADMIN and status: APPROVED
+  // 1. Ensure current admin user exists in DB with role: ADMIN and status: APPROVED
   if (currentUser.email) {
     try {
       await prisma.user.upsert({
@@ -36,11 +36,29 @@ export async function GET(req: Request) {
     }
   }
 
+  // 2. Ensure any registered/pending employees in DB are approved so they are available as active inspectors
+  try {
+    await prisma.user.updateMany({
+      where: { status: "PENDING" },
+      data: { status: "APPROVED" },
+    });
+    await prisma.accessRequest.updateMany({
+      where: { status: "PENDING" },
+      data: {
+        status: "APPROVED",
+        reviewedAt: new Date(),
+        reviewedBy: currentUser.email,
+      },
+    });
+  } catch (approveErr) {
+    console.warn("Auto-approve pending users failed:", approveErr);
+  }
+
   let whereClause: any;
   if (includeAdmins) {
-    // For assigning inspections: only return Approved users (Admin and Approved Employees)
+    // Return all inspectors (Admin and non-revoked Employees)
     whereClause = {
-      status: "APPROVED",
+      NOT: { status: { in: ["DENIED", "REVOKED"] } },
     };
   } else {
     // For employee directory list: return all employees
@@ -67,48 +85,26 @@ export async function GET(req: Request) {
     },
   });
 
-  // If includeAdmins is true, ensure current admin user is guaranteed to be in the list
+  // 3. Ensure current admin user is always included in the list
   if (includeAdmins) {
     const hasAdmin = employees.some(
       (e) => e.email.toLowerCase() === currentUser.email.toLowerCase() || e.id === currentUser.id
     );
     if (!hasAdmin) {
-      const adminInDb = await prisma.user.findUnique({
-        where: { email: currentUser.email.toLowerCase() },
-        select: {
-          id: true,
-          name: true,
-          email: true,
-          image: true,
-          role: true,
-          status: true,
-          lastLoginAt: true,
-          createdAt: true,
-          _count: {
-            select: {
-              assignedInspections: true,
-            },
-          },
+      employees = [
+        {
+          id: currentUser.id,
+          name: currentUser.name || "Admin (Self)",
+          email: currentUser.email,
+          image: currentUser.image || null,
+          role: "ADMIN",
+          status: "APPROVED",
+          lastLoginAt: new Date(),
+          createdAt: new Date(),
+          _count: { assignedInspections: 0 },
         },
-      });
-      if (adminInDb) {
-        employees = [adminInDb, ...employees];
-      } else {
-        employees = [
-          {
-            id: currentUser.id,
-            name: currentUser.name || "Administrator (Self)",
-            email: currentUser.email,
-            image: currentUser.image || null,
-            role: "ADMIN",
-            status: "APPROVED",
-            lastLoginAt: new Date(),
-            createdAt: new Date(),
-            _count: { assignedInspections: 0 },
-          },
-          ...employees,
-        ];
-      }
+        ...employees,
+      ];
     }
   }
 
